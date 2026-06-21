@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { MatchRecord } from "@/types/match";
 import { formatGamesToWin, formatScoringMode, formatScoreLine } from "@/utils/scoringLogic";
-import ScoreButton from "./ScoreButton";
 
 interface HistoryPageProps {
   records: MatchRecord[];
+  loading?: boolean;
+  cloudEnabled?: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onBack: () => void;
+  onRefresh?: () => void;
 }
 
 function formatDate(ts: number): string {
@@ -17,7 +19,15 @@ function formatDate(ts: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function HistoryPage({ records, onSelect, onDelete, onBack }: HistoryPageProps) {
+export default function HistoryPage({
+  records,
+  loading = false,
+  cloudEnabled = false,
+  onSelect,
+  onDelete,
+  onBack,
+  onRefresh,
+}: HistoryPageProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleDelete = (id: string) => {
@@ -37,10 +47,31 @@ export default function HistoryPage({ records, onSelect, onDelete, onBack }: His
         </button>
         <span className="flex-1 text-center text-sm font-semibold text-apple-gray-900">
           历史记录
+          {cloudEnabled && (
+            <span className="block text-[10px] font-normal text-apple-gray-400">
+              云端同步
+            </span>
+          )}
         </span>
-        <div className="w-12" />
+        {onRefresh ? (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="text-sm text-apple-blue font-medium w-12 text-right disabled:opacity-40"
+          >
+            {loading ? "…" : "刷新"}
+          </button>
+        ) : (
+          <div className="w-12" />
+        )}
       </div>
 
+      {loading && records.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-apple-blue border-t-transparent animate-spin" />
+        </div>
+      ) : (
       <div className="flex-1 min-h-0 overflow-y-auto">
         {records.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -114,6 +145,7 @@ export default function HistoryPage({ records, onSelect, onDelete, onBack }: His
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

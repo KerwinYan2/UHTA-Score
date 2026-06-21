@@ -1,0 +1,28 @@
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+
+let adminClient: SupabaseClient | null = null;
+
+export function isCloudEnabled(): boolean {
+  return !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
+
+export function getSupabaseAdmin(): SupabaseClient | null {
+  if (!isCloudEnabled()) return null;
+
+  if (!adminClient) {
+    adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
+  }
+
+  return adminClient;
+}
+
+export function getHistoryPassword(): string {
+  return process.env.HISTORY_PASSWORD ?? "11224455";
+}

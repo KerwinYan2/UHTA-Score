@@ -52,3 +52,19 @@ export function deleteHistoryRecord(id: string): void {
   const history = loadHistory().filter((r) => r.id !== id);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
+
+export function mergeHistoryRecords(
+  local: MatchRecord[],
+  cloud: MatchRecord[]
+): MatchRecord[] {
+  const map = new Map<string, MatchRecord>();
+  for (const record of [...local, ...cloud]) {
+    map.set(record.id, record);
+  }
+  return Array.from(map.values()).sort((a, b) => b.endTime - a.endTime);
+}
+
+export function replaceHistory(records: MatchRecord[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(records));
+}

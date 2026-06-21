@@ -11,9 +11,16 @@ import {
   deleteHistoryRecord,
   loadActiveMatch,
   loadHistory,
+  mergeHistoryRecords,
+  replaceHistory,
   saveActiveMatch,
   saveHistoryRecord,
 } from "@/utils/matchStorage";
+import {
+  deleteCloudRecord,
+  fetchCloudHistory,
+  saveCloudRecord,
+} from "@/utils/matchCloud";
 import { createMatch, createMatchRecord } from "@/utils/scoringLogic";
 
 type View = "home" | "match" | "history" | "detail";
@@ -24,6 +31,8 @@ export default function Page() {
   const [hasSavedMatch, setHasSavedMatch] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [history, setHistory] = useState<MatchRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [cloudEnabled, setCloudEnabled] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -75,6 +84,7 @@ export default function Page() {
     setHistory(loadHistory());
     saveActiveMatch(null);
     setHasSavedMatch(false);
+    void saveCloudRecord(record);
   }, []);
 
   const handleLeaveMatch = useCallback(() => {
@@ -88,10 +98,26 @@ export default function Page() {
     setView("home");
   }, []);
 
-  const goToHistory = useCallback(() => {
-    setHistory(loadHistory());
-    setView("history");
+  const refreshHistory = useCallback(async () => {
+    const local = loadHistory();
+    setHistoryLoading(true);
+    try {
+      const { enabled, records: cloud } = await fetchCloudHistory();
+      setCloudEnabled(enabled);
+      const merged = mergeHistoryRecords(local, cloud);
+      replaceHistory(merged);
+      setHistory(merged);
+    } catch {
+      setHistory(local);
+    } finally {
+      setHistoryLoading(false);
+    }
   }, []);
+
+  const goToHistory = useCallback(() => {
+    void refreshHistory();
+    setView("history");
+  }, [refreshHistory]);
 
   const handleHistory = useCallback(() => {
     if (isHistoryUnlocked()) {
@@ -115,6 +141,7 @@ export default function Page() {
     (id: string) => {
       deleteHistoryRecord(id);
       setHistory(loadHistory());
+      void deleteCloudRecord(id);
       if (selectedRecordId === id) {
         setSelectedRecordId(null);
         setView("history");
@@ -156,9 +183,12 @@ export default function Page() {
     return (
       <HistoryPage
         records={history}
+        loading={historyLoading}
+        cloudEnabled={cloudEnabled}
         onSelect={handleSelectRecord}
         onDelete={handleDeleteRecord}
         onBack={handleBackFromHistory}
+        onRefresh={() => void refreshHistory()}
       />
     );
   }
