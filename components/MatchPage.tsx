@@ -165,6 +165,20 @@ export default function MatchPage({
     onUpdate(scorePoint(match, player));
   };
 
+  const handleStatClick = (type: StatType) => {
+    if (finished) return;
+
+    // ACE / DF only apply to the current server — no picker needed
+    if (type === "ace" || type === "df") {
+      const server = match.currentServer;
+      const { winner, statPlayer, statType } = getStatPointWinner(server, type);
+      onUpdate(scorePoint(match, winner, { player: statPlayer, type: statType }));
+      return;
+    }
+
+    setPendingStat(type);
+  };
+
   const handleStatSelect = (player: PlayerIndex) => {
     if (!pendingStat || finished) return;
     const { winner, statPlayer, statType } = getStatPointWinner(player, pendingStat);
@@ -245,7 +259,7 @@ export default function MatchPage({
               <div className="score-display-lg">{p1Point}</div>
               <div className="text-center mt-1">
                 <p className="games-display">{match.games.player1}</p>
-                <p className="text-[10px] text-apple-gray-300 uppercase">盘分</p>
+                <p className="text-[10px] text-apple-gray-300 uppercase">局分</p>
               </div>
             </div>
             <button
@@ -284,7 +298,7 @@ export default function MatchPage({
               <div className="score-display-lg">{p2Point}</div>
               <div className="text-center mt-1">
                 <p className="games-display">{match.games.player2}</p>
-                <p className="text-[10px] text-apple-gray-300 uppercase">盘分</p>
+                <p className="text-[10px] text-apple-gray-300 uppercase">局分</p>
               </div>
             </div>
             <button
@@ -309,7 +323,7 @@ export default function MatchPage({
               <button
                 key={type}
                 type="button"
-                onClick={() => !finished && setPendingStat(type)}
+                onClick={() => handleStatClick(type)}
                 disabled={finished}
                 className="match-stat-btn"
               >
