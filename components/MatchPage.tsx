@@ -15,8 +15,6 @@ import {
   scorePoint,
   undoLastAction,
 } from "@/utils/scoringLogic";
-import ScoreButton from "./ScoreButton";
-import StatPicker from "./StatPicker";
 
 interface MatchPageProps {
   match: MatchState;
@@ -24,21 +22,24 @@ interface MatchPageProps {
   onLeave: () => void;
   onEnd: () => void;
   onMatchComplete: (match: MatchState) => void;
+  onReselectServer: () => void;
 }
 
-const STAT_TYPES: { type: StatType; label: string }[] = [
-  { type: "ace", label: "ACE" },
-  { type: "winner", label: "Winner" },
-  { type: "ue", label: "UE" },
-  { type: "df", label: "DF" },
+const STAT_ACTIONS: { type: StatType; label: string; tone: "mint" | "red" | "gold" }[] = [
+  { type: "df", label: "双误", tone: "red" },
+  { type: "ace", label: "ACE", tone: "mint" },
+  { type: "winner", label: "制胜分", tone: "mint" },
+  { type: "ue", label: "非受迫失误", tone: "gold" },
 ];
 
 function MatchEndModal({
   match,
-  onClose,
+  onConfirm,
+  onBack,
 }: {
   match: MatchState;
-  onClose: () => void;
+  onConfirm: () => void;
+  onBack: () => void;
 }) {
   const winnerName =
     match.matchWinner === 1 ? match.player1.name : match.player2.name;
@@ -49,70 +50,109 @@ function MatchEndModal({
     match.games.player1 === match.tiebreakAt &&
     match.games.player2 === match.tiebreakAt &&
     (match.points.player1 > 0 || match.points.player2 > 0)
-      ? ` (抢七 ${match.points.player1}-${match.points.player2})`
+      ? " (抢七 " + match.points.player1 + "-" + match.points.player2 + ")"
       : "";
 
   return (
     <div className="modal-overlay">
-      <div className="modal-sheet max-h-[90dvh] overflow-hidden flex flex-col">
-        <div className="text-center mb-4">
-          <p className="text-3xl mb-2">🏆</p>
-          <h2 className="text-2xl font-bold text-apple-gray-900">{winnerName}</h2>
-          <p className="text-sm text-apple-gray-500 mt-1">比赛结束 · 获胜</p>
-        </div>
+      <div className="modal-sheet match-end-sheet max-h-[90dvh] overflow-hidden flex flex-col">
+        <h2 className="text-4xl font-black text-[#111827] mb-6">比赛结束</h2>
+        <p className="text-center text-2xl font-black text-[#111827] mb-5">
+          {winnerName} {scoreDisplay}{tiebreakNote}
+        </p>
 
-        <div className="text-center mb-4">
-          <p className="text-4xl font-bold tabular-nums text-apple-gray-900">
-            {scoreDisplay}{tiebreakNote}
-          </p>
-          <p className="text-sm text-apple-gray-500 mt-2">
-            {match.player1.name} vs {match.player2.name}
-          </p>
-        </div>
-
-        <div className="flex justify-center gap-6 text-sm text-apple-gray-500 mb-4">
-          <span>时长 {duration}</span>
-          <span>{formatGamesToWin(match.gamesToWin)}</span>
-          <span>{formatScoringMode(match.scoringMode)}</span>
-        </div>
-
-        <div className="glass-card p-3 mb-4">
+        <div className="rounded-[8px] bg-white p-4 mb-5">
+          <p className="text-center text-lg font-black text-[#111827] mb-3">本场统计</p>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-apple-gray-400 text-xs">
-                <th className="text-left pb-2 font-medium">球员</th>
-                <th className="pb-2 font-medium">ACE</th>
-                <th className="pb-2 font-medium">Win</th>
-                <th className="pb-2 font-medium">UE</th>
-                <th className="pb-2 font-medium">DF</th>
+              <tr className="text-[#111827]">
+                <th className="text-left pb-2 font-black"></th>
+                <th className="pb-2 font-black">{match.player1.name}</th>
+                <th className="pb-2 font-black">{match.player2.name}</th>
               </tr>
             </thead>
-            <tbody>
-              <tr className="border-t border-apple-gray-100">
-                <td className="py-1.5 font-medium truncate max-w-[80px]">{match.player1.name}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.ace}</td>
+            <tbody className="font-black text-[#111827]">
+              <tr>
+                <td className="py-1.5 text-apple-gray-400">制胜分</td>
                 <td className="py-1.5 text-center tabular-nums">{match.player1.stats.winner}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.ue}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.df}</td>
-              </tr>
-              <tr className="border-t border-apple-gray-100">
-                <td className="py-1.5 font-medium truncate max-w-[80px]">{match.player2.name}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player2.stats.ace}</td>
                 <td className="py-1.5 text-center tabular-nums">{match.player2.stats.winner}</td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-apple-gray-400">Ace</td>
+                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.ace}</td>
+                <td className="py-1.5 text-center tabular-nums">{match.player2.stats.ace}</td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-apple-gray-400">非受迫失误</td>
+                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.ue}</td>
                 <td className="py-1.5 text-center tabular-nums">{match.player2.stats.ue}</td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-apple-gray-400">双误</td>
+                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.df}</td>
                 <td className="py-1.5 text-center tabular-nums">{match.player2.stats.df}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <ScoreButton
-          label="返回首页"
-          onClick={onClose}
-          variant="primary"
-          size="lg"
-          className="w-full"
-        />
+        <div className="flex justify-center gap-5 text-sm font-bold text-apple-gray-500 mb-6">
+          <span>时长 {duration}</span>
+          <span>{formatGamesToWin(match.gamesToWin)}</span>
+          <span>{formatScoringMode(match.scoringMode)}</span>
+        </div>
+
+        <div className="grid grid-cols-[1fr_1.1fr] gap-3 items-center">
+          <button
+            type="button"
+            onClick={onBack}
+            className="h-14 rounded-[18px] text-base font-black text-[#111827]"
+          >
+            返回修改
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="h-14 rounded-[22px] bg-black text-base font-black text-white"
+          >
+            确认结束
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReselectServerModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="modal-overlay">
+      <div className="modal-sheet reselect-server-sheet">
+        <h2 className="text-2xl font-black text-[#111827]">重新选边？</h2>
+        <p className="mt-3 text-sm font-bold leading-relaxed text-apple-gray-500">
+          当前比分、局分和技术统计都会作废，重新选边。
+        </p>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="h-14 rounded-[18px] bg-[#F2F3F5] text-base font-black text-[#111827]"
+          >
+            继续比赛
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="h-14 rounded-[18px] bg-[#0E1320] text-base font-black text-white"
+          >
+            重新开始
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -124,20 +164,19 @@ export default function MatchPage({
   onLeave,
   onEnd,
   onMatchComplete,
+  onReselectServer,
 }: MatchPageProps) {
-  const [pendingStat, setPendingStat] = useState<StatType | null>(null);
   const [showEndModal, setShowEndModal] = useState(false);
   const [completedHandled, setCompletedHandled] = useState(false);
+  const [showReselectModal, setShowReselectModal] = useState(false);
 
   const finished = !!match.matchWinner;
-  const canUndo = match.history.length > 0 && !finished;
+  const canUndo = match.history.length > 0;
   const deuce = isDeuce(match.points, match.isTiebreak);
   const goldenDeuce = isGoldenPoint(match.points, match.isTiebreak, match.scoringMode);
 
-  const p1Serving = !finished && match.currentServer === 1;
-  const p2Serving = !finished && match.currentServer === 2;
-
   const formatHeader = formatMatchFormatHeader(match.gamesToWin, match.scoringMode);
+  const currentGame = Math.max(1, match.games.player1 + match.games.player2 + (finished ? 0 : 1));
 
   const p1Point = getScoreDisplay(
     match.points,
@@ -156,205 +195,191 @@ export default function MatchPage({
     if (match.matchWinner && !completedHandled) {
       setShowEndModal(true);
       setCompletedHandled(true);
-      onMatchComplete(match);
     }
-  }, [match, completedHandled, onMatchComplete]);
+  }, [match.matchWinner, completedHandled]);
 
   const handlePoint = (player: PlayerIndex) => {
     if (finished) return;
     onUpdate(scorePoint(match, player));
   };
 
-  const handleStatClick = (type: StatType) => {
+  const handleStatClick = (player: PlayerIndex, type: StatType) => {
     if (finished) return;
+    if ((type === "ace" || type === "df") && player !== match.currentServer) return;
 
-    // ACE / DF only apply to the current server — no picker needed
-    if (type === "ace" || type === "df") {
-      const server = match.currentServer;
-      const { winner, statPlayer, statType } = getStatPointWinner(server, type);
-      onUpdate(scorePoint(match, winner, { player: statPlayer, type: statType }));
-      return;
-    }
-
-    setPendingStat(type);
-  };
-
-  const handleStatSelect = (player: PlayerIndex) => {
-    if (!pendingStat || finished) return;
-    const { winner, statPlayer, statType } = getStatPointWinner(player, pendingStat);
+    const { winner, statPlayer, statType } = getStatPointWinner(player, type);
     onUpdate(scorePoint(match, winner, { player: statPlayer, type: statType }));
-    setPendingStat(null);
   };
 
   const handleUndo = () => {
+    if (!canUndo) return;
     onUpdate(undoLastAction(match));
+    setShowEndModal(false);
+    setCompletedHandled(false);
   };
 
-  const handleCloseEnd = () => {
+  const handleConfirmEnd = () => {
+    onMatchComplete(match);
     setShowEndModal(false);
     onEnd();
   };
 
+  const handleBackToEdit = () => {
+    handleUndo();
+  };
+
+  const handleReselectConfirm = () => {
+    setShowReselectModal(false);
+    onReselectServer();
+  };
+
+  const renderPlayerColumn = (player: PlayerIndex) => {
+    const isPlayer1 = player === 1;
+    const playerName = isPlayer1 ? match.player1.name : match.player2.name;
+    const playerPoint = isPlayer1 ? p1Point : p2Point;
+    const games = isPlayer1 ? match.games.player1 : match.games.player2;
+    const serving = !finished && match.currentServer === player;
+
+    return (
+      <div className={"scorecard-player " + (serving ? "scorecard-player-serving" : "")}>
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-3xl font-black text-[#111827]">{playerName}</p>
+          {serving && <span className="serve-dot">发球</span>}
+        </div>
+        <button
+          type="button"
+          onClick={() => handlePoint(player)}
+          disabled={finished}
+          className="point-score-card"
+        >
+          <span className="text-sm font-black text-apple-gray-400">当前分</span>
+          <strong>{playerPoint}</strong>
+        </button>
+        <div className="text-center">
+          <p className="text-xs font-black text-apple-gray-400">局分</p>
+          <p className="text-3xl font-black tabular-nums text-[#111827]">{games}</p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStatColumn = (player: PlayerIndex) => {
+    return (
+      <div className="grid gap-3">
+        {STAT_ACTIONS.map((action) => {
+          const serverOnly = action.type === "ace" || action.type === "df";
+          const disabled = finished || (serverOnly && match.currentServer !== player);
+          return (
+            <button
+              key={player + "-" + action.type}
+              type="button"
+              onClick={() => handleStatClick(player, action.type)}
+              disabled={disabled}
+              className={"match-action-btn match-action-" + action.tone}
+            >
+              {action.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
-    <div className="page-fill match-page">
-      {/* Top bar: serve indicator */}
-      <div className="shrink-0 px-4 pt-1 pb-1">
-        <div className="flex items-center justify-between h-10">
+    <div className="page-fill event-page match-page-v2">
+      <div className="shrink-0 px-5 pt-5 pb-3">
+        <div className="grid grid-cols-[80px_1fr_80px] items-center">
           <button
             type="button"
             onClick={onLeave}
-            className="text-sm text-apple-blue font-medium min-w-[60px]"
+            className="text-left text-sm font-semibold text-[#111827]"
           >
-            ← 首页
+            &lt; 返回
           </button>
-          <div className="text-center flex-1 min-w-0 px-2">
-            <p className="text-sm font-semibold text-apple-gray-900 truncate">
-              {formatHeader}
+          <h1 className="text-center text-3xl font-black text-[#111827]">比赛记分</h1>
+          <div className="justify-self-end rounded-full bg-[#DDFBF4] px-3 py-1 text-xs font-black text-[#10A98F]">
+            计分中
+          </div>
+        </div>
+      </div>
+
+      <div className="match-main-panel">
+        <div className="scoreboard-shell mb-4">
+          <div className="flex items-center justify-between gap-3 text-sm font-bold text-apple-gray-400">
+            <span>{formatHeader}</span>
+            <span>记分人 {match.scorerName || "-"}</span>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-5">
+            {renderPlayerColumn(1)}
+            {renderPlayerColumn(2)}
+          </div>
+
+          <div className="mt-4 rounded-[8px] bg-white/70 px-4 py-3 text-center">
+            <p className="text-sm font-black text-apple-gray-400">
+              第1盘 · 第{currentGame}局
+            </p>
+            <p className="mt-1 text-4xl font-black tabular-nums text-[#111827]">
+              {match.games.player1} : {match.games.player2}
             </p>
             {match.isTiebreak && !finished && (
-              <p className="text-xs text-orange-600 font-medium">
+              <p className="mt-1 text-sm font-black text-[#C68B00]">
                 抢七 {match.points.player1}-{match.points.player2}
               </p>
             )}
           </div>
-          <div className="min-w-[60px]" />
         </div>
 
         {deuce && !finished && match.scoringMode === "advantage" && (
-          <p className="text-center text-xs font-medium text-apple-gray-500 py-1">
+          <p className="match-state-banner mb-3 rounded-[8px] bg-white px-4 py-3 text-center text-sm font-black text-apple-gray-500 shadow-apple">
             Deuce · 平分
           </p>
         )}
         {goldenDeuce && !finished && (
-          <p className="text-center text-xs font-medium text-amber-600 py-1">
+          <p className="match-state-banner mb-3 rounded-[8px] bg-[#FFF7DD] px-4 py-3 text-center text-sm font-black text-[#A97800] shadow-apple">
             金球 · 下一分决胜
           </p>
         )}
-      </div>
 
-      {/* Player columns — 分数 2/5 · 得分 3/10 · 留白 · ACE */}
-      <div className="match-scoring-zone">
-        <div className="player-side-column">
-          <div className="player-column-top">
-            <p className="text-lg font-semibold text-apple-gray-900 truncate w-full text-center px-1">
-              {match.player1.name}
-            </p>
-            <span
-              className={`text-[10px] font-semibold uppercase tracking-wider h-4 leading-4 ${
-                p1Serving ? "text-apple-blue" : "invisible"
-              }`}
-            >
-              发球
-            </span>
-          </div>
-          <div
-            className={[
-              "player-side-highlight",
-              p1Serving ? "player-column-serving-blue" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            <div className="player-column-score-area">
-              <div className="score-display-lg">{p1Point}</div>
-              <div className="text-center mt-1">
-                <p className="games-display">{match.games.player1}</p>
-                <p className="text-[10px] text-apple-gray-300 uppercase">局分</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => handlePoint(1)}
-              disabled={finished}
-              className="score-btn score-btn-blue"
-            >
-              得分
-            </button>
-          </div>
+        <div className="match-actions-grid grid grid-cols-2 gap-4">
+          {renderStatColumn(1)}
+          {renderStatColumn(2)}
         </div>
 
-        <div className="player-side-column">
-          <div className="player-column-top">
-            <p className="text-lg font-semibold text-apple-gray-900 truncate w-full text-center px-1">
-              {match.player2.name}
-            </p>
-            <span
-              className={`text-[10px] font-semibold uppercase tracking-wider h-4 leading-4 ${
-                p2Serving ? "text-[#5856D6]" : "invisible"
-              }`}
-            >
-              发球
-            </span>
-          </div>
-          <div
-            className={[
-              "player-side-highlight",
-              p2Serving ? "player-column-serving-purple" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            <div className="player-column-score-area">
-              <div className="score-display-lg">{p2Point}</div>
-              <div className="text-center mt-1">
-                <p className="games-display">{match.games.player2}</p>
-                <p className="text-[10px] text-apple-gray-300 uppercase">局分</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => handlePoint(2)}
-              disabled={finished}
-              className="score-btn score-btn-purple"
-            >
-              得分
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="match-content-gap" aria-hidden />
-
-      {/* Bottom toolbar: stats + undo */}
-      <div className="shrink-0 safe-bottom border-t border-apple-gray-100 bg-white">
-        <div className="match-stats-row">
-          <div className="grid grid-cols-4 gap-2 w-full">
-            {STAT_TYPES.map(({ type, label }) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => handleStatClick(type)}
-                disabled={finished}
-                className="match-stat-btn"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex justify-center pb-1 px-3">
-          <ScoreButton
-            label="撤销"
+        <div className="match-undo-row mt-4 grid grid-cols-[1fr_64px] gap-3">
+          <button
+            type="button"
             onClick={handleUndo}
-            variant="ghost"
-            size="sm"
             disabled={!canUndo}
-          />
+            className="h-14 rounded-[8px] border border-[#D9A2B3] bg-white text-base font-black text-[#B94C68] disabled:opacity-40"
+          >
+            撤销记录
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowReselectModal(true)}
+            disabled={finished}
+            className="h-14 rounded-[8px] border border-[#E0E4E2] bg-white text-xl font-black text-apple-gray-400 disabled:opacity-40"
+            aria-label="重新选边"
+          >
+            ↶
+          </button>
         </div>
       </div>
 
-      {pendingStat && (
-        <StatPicker
-          statLabel={STAT_TYPES.find((s) => s.type === pendingStat)?.label ?? pendingStat}
-          player1Name={match.player1.name}
-          player2Name={match.player2.name}
-          onSelect={handleStatSelect}
-          onClose={() => setPendingStat(null)}
+      {showReselectModal && (
+        <ReselectServerModal
+          onConfirm={handleReselectConfirm}
+          onCancel={() => setShowReselectModal(false)}
         />
       )}
 
       {showEndModal && match.matchWinner && (
-        <MatchEndModal match={match} onClose={handleCloseEnd} />
+        <MatchEndModal
+          match={match}
+          onConfirm={handleConfirmEnd}
+          onBack={handleBackToEdit}
+        />
       )}
     </div>
   );

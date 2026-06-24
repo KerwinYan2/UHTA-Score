@@ -291,3 +291,477 @@
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
+
+
+@layer components {
+  .event-page {
+    background: #f6f8f6;
+  }
+
+  .event-kicker {
+    @apply text-xs font-black uppercase text-[#10BFA3];
+  }
+
+  .event-title {
+    @apply text-4xl font-black text-[#0E1320];
+    letter-spacing: 0;
+    line-height: 1.04;
+  }
+
+  .event-stat-card {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white px-3 py-3 shadow-apple;
+    min-height: 70px;
+  }
+
+  .event-stat-card span {
+    @apply block text-sm font-bold text-apple-gray-400;
+  }
+
+  .event-stat-card strong {
+    @apply mt-2 block text-xl font-black text-[#0E1320];
+  }
+
+  .setup-panel {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white p-4 shadow-apple;
+  }
+
+  .setup-label {
+    @apply mb-2 block text-xs font-black uppercase text-apple-gray-400;
+  }
+
+  .event-page .apple-input {
+    @apply rounded-[8px] border-[#E1E7E4] bg-white font-bold shadow-none;
+  }
+
+  .event-page .option-card {
+    @apply rounded-[8px] border-[#E1E7E4] bg-white text-[#111827] shadow-apple;
+  }
+
+  .event-page .option-card-checked {
+    @apply border-[#10D6B4] bg-[#E6FBF6] shadow-apple;
+  }
+
+  .match-page-v2 {
+    color: #111827;
+  }
+
+  .match-main-panel {
+    @apply flex-1 min-h-0 px-5 pb-5 safe-bottom;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .scoreboard-shell {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white/80 p-4 shadow-apple;
+  }
+
+  .scorecard-player {
+    @apply min-w-0 rounded-[8px] bg-white p-3 shadow-apple;
+  }
+
+  .scorecard-player-serving {
+    background: rgba(17, 24, 39, 0.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.72),
+      0 10px 22px rgba(17, 24, 39, 0.12);
+    @apply ring-1 ring-black/10;
+  }
+
+  .scorecard-player-serving .point-score-card {
+    background: rgba(255, 255, 255, 0.54);
+  }
+
+  .scorecard-player-serving .text-center {
+    @apply mt-3 px-3 py-2;
+  }
+
+  .serve-dot {
+    @apply shrink-0 rounded-full bg-black/10 px-2 py-1 text-[11px] font-black text-[#111827];
+  }
+
+  .point-score-card {
+    @apply mt-4 flex h-28 w-full flex-col items-center justify-center rounded-[8px] bg-[#F7FAF9]
+           transition active:scale-[0.98] disabled:opacity-50;
+  }
+
+  .point-score-card strong {
+    @apply mt-1 text-5xl font-black tabular-nums text-[#3E77A8];
+  }
+
+  .match-action-btn {
+    @apply h-20 rounded-[8px] border bg-white px-2 text-base font-black transition active:scale-[0.98]
+           disabled:bg-[#F2F3F5] disabled:text-[#9CA3AF] disabled:border-[#E5E7EB] disabled:opacity-100;
+  }
+
+  .match-action-mint {
+    @apply border-[#8FE9D8] bg-[#8DE5D2] text-[#145A50];
+  }
+
+  .match-action-red {
+    @apply border-[#E5B9C4] text-[#B94C68];
+  }
+
+  .match-action-gold {
+    @apply border-[#D8C98E] text-[#9B7A16];
+  }
+
+  .match-end-sheet {
+    background: #eef8f3;
+    border-radius: 36px 36px 0 0;
+  }
+
+  .reselect-server-sheet {
+    background: #f7faf9;
+    border-radius: 28px 28px 0 0;
+  }
+
+  @media (min-width: 640px) {
+    .match-end-sheet {
+      border-radius: 36px;
+    }
+
+    .reselect-server-sheet {
+      border-radius: 28px;
+    }
+  }
+}
+
+
+@layer components {
+  .history-match-card {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white p-3 shadow-apple;
+  }
+
+  .history-player-row {
+    @apply grid grid-cols-[1fr_auto] items-center gap-2 text-lg font-black text-[#111827];
+  }
+
+  .history-player-row span {
+    @apply min-w-0 truncate;
+  }
+
+  .history-player-row strong {
+    @apply tabular-nums text-xl font-black;
+  }
+
+  .history-empty-card {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white p-6 text-center shadow-apple;
+  }
+
+  .toss-panel {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white p-4 shadow-apple;
+  }
+
+  .toss-page > .flex-1 {
+    @apply px-5 pb-4;
+  }
+
+  .toss-choice-block > span {
+    @apply mb-2 block text-xs font-black uppercase text-apple-gray-400;
+  }
+
+  .toss-choice-grid {
+    @apply grid grid-cols-2 gap-3;
+  }
+
+  .toss-choice-grid button {
+    @apply flex min-h-[52px] min-w-0 flex-col items-center justify-center rounded-[8px]
+           border border-[#E1E7E4] bg-[#F7FAF9] px-3 py-2 text-base font-black text-[#111827]
+           transition active:scale-[0.98] disabled:active:scale-100;
+  }
+
+  .toss-choice-grid button small {
+    @apply mt-0.5 text-[10px] font-black text-apple-gray-400;
+  }
+
+  .toss-choice-grid button.is-active {
+    @apply border-[#10D6B4] bg-[#E6FBF6] text-[#063C34] ring-2 ring-[#10D6B4]/20;
+  }
+
+  .toss-assignment {
+    @apply mt-4 grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2 rounded-[8px]
+           bg-[#F7FAF9] px-3 py-2.5 text-xs font-black text-[#68736F];
+  }
+
+  .toss-assignment strong {
+    @apply min-w-0 truncate text-sm text-[#111827];
+  }
+
+  .toss-reel {
+    @apply relative mt-4 h-44 overflow-hidden rounded-[18px] border border-[#E1E7E4] bg-[#F7FAF9];
+    contain: layout paint;
+    --reel-final-y: -1498px;
+  }
+
+  .toss-reel::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 17px;
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0) 18% 82%, rgba(255, 255, 255, 0.68)),
+      repeating-linear-gradient(0deg, rgba(17, 24, 39, 0.035) 0 1px, transparent 1px 16px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .toss-reel-track {
+    @apply absolute left-0 right-0 top-1/2 flex flex-col items-stretch;
+    transform: translate3d(0, var(--reel-final-y), 0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .toss-reel.is-rolling .toss-reel-track {
+    animation: toss-reel-spin 1280ms cubic-bezier(0.08, 0.78, 0.12, 1) forwards;
+  }
+
+  .toss-reel-track button {
+    @apply flex h-7 shrink-0 flex-col items-center justify-center text-base font-black text-apple-gray-300;
+    line-height: 1;
+    transform: translateZ(0);
+  }
+
+  .toss-reel-track button.is-selected {
+    @apply text-xl text-[#111827];
+    transform: scale(1.04);
+  }
+
+  .toss-reel.is-rolling .toss-reel-track button {
+    @apply text-base;
+    opacity: 0.74;
+  }
+
+  .toss-reel-selection {
+    @apply absolute left-4 right-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-[16px] border-y border-[#DCE3E0] bg-white/60;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+  }
+
+  .toss-reel-fade {
+    @apply absolute left-0 right-0 z-20 h-14;
+    pointer-events: none;
+  }
+
+  .toss-reel-fade-top {
+    @apply top-0;
+    background: linear-gradient(#f7faf9, rgba(247, 250, 249, 0));
+  }
+
+  .toss-reel-fade-bottom {
+    @apply bottom-0;
+    background: linear-gradient(rgba(247, 250, 249, 0), #f7faf9);
+  }
+
+}
+
+@keyframes toss-reel-spin {
+  0% {
+    transform: translate3d(0, -98px, 0);
+    filter: blur(0);
+  }
+  18% {
+    transform: translate3d(0, -392px, 0);
+    filter: blur(0.65px);
+  }
+  44% {
+    transform: translate3d(0, -924px, 0);
+    filter: blur(1.25px);
+  }
+  70% {
+    transform: translate3d(0, -1320px, 0);
+    filter: blur(0.8px);
+  }
+  88% {
+    transform: translate3d(0, -1462px, 0);
+    filter: blur(0);
+  }
+  100% {
+    transform: translate3d(0, var(--reel-final-y), 0);
+    filter: blur(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .toss-page > .h-14 {
+    @apply h-12;
+  }
+
+  .toss-header {
+    @apply mb-4;
+  }
+
+  .toss-header .event-title {
+    @apply text-3xl;
+  }
+
+  .toss-header p:last-child {
+    @apply mt-1;
+  }
+
+  .toss-panel {
+    @apply p-3;
+  }
+
+  .toss-choice-block.mt-4,
+  .toss-assignment,
+  .toss-reel {
+    @apply mt-3;
+  }
+
+  .toss-reel + p {
+    @apply mt-3;
+  }
+
+  .toss-reel + p + button {
+    @apply mt-3 py-3.5;
+  }
+
+  .toss-result-panel {
+    @apply mt-3 p-3;
+  }
+
+  .toss-result-panel p {
+    @apply mb-3;
+  }
+
+  .match-page-v2 {
+    height: 100%;
+  }
+
+  .match-page-v2 > .shrink-0 {
+    @apply px-4 pt-3 pb-2;
+  }
+
+  .match-page-v2 h1 {
+    @apply text-2xl;
+  }
+
+  .match-main-panel {
+    @apply px-4 pb-3;
+  }
+
+  .scoreboard-shell {
+    @apply mb-2 p-3;
+  }
+
+  .scoreboard-shell > .flex {
+    @apply text-[11px] leading-tight;
+  }
+
+  .scoreboard-shell > .mt-5 {
+    @apply mt-3 gap-3;
+  }
+
+  .scorecard-player {
+    @apply p-2;
+  }
+
+  .scorecard-player-serving .text-center {
+    @apply mt-2 px-2 py-1;
+  }
+
+  .scorecard-player p.truncate {
+    @apply text-xl;
+  }
+
+  .serve-dot {
+    @apply px-1.5 py-0.5 text-[10px];
+  }
+
+  .point-score-card {
+    @apply mt-2 h-[96px];
+  }
+
+  .point-score-card strong {
+    @apply text-5xl;
+  }
+
+  .scorecard-player .text-center {
+    @apply mt-1;
+  }
+
+  .scorecard-player .text-center p:last-child {
+    @apply text-2xl;
+  }
+
+  .scoreboard-shell > .mt-4 {
+    @apply mt-2 px-3 py-2;
+  }
+
+  .scoreboard-shell > .mt-4 p:first-child {
+    @apply text-xs;
+  }
+
+  .scoreboard-shell > .mt-4 p:nth-child(2) {
+    @apply mt-0 text-3xl;
+  }
+
+  .match-state-banner {
+    @apply mb-2 px-3 py-2 text-xs;
+  }
+
+  .match-actions-grid {
+    @apply gap-2;
+  }
+
+  .match-actions-grid > div {
+    @apply gap-2;
+  }
+
+  .match-action-btn {
+    @apply h-[60px] px-1 text-sm;
+  }
+
+  .match-undo-row {
+    @apply mt-2;
+  }
+
+  .match-undo-row button {
+    @apply h-12;
+  }
+}
+
+@media (max-width: 640px) and (max-height: 760px) {
+  .match-page-v2 > .shrink-0 {
+    @apply pt-2 pb-1;
+  }
+
+  .match-page-v2 h1 {
+    @apply text-xl;
+  }
+
+  .scoreboard-shell {
+    @apply p-2;
+  }
+
+  .scoreboard-shell > .mt-5 {
+    @apply mt-2;
+  }
+
+  .point-score-card {
+    height: 78px;
+  }
+
+  .point-score-card strong {
+    @apply text-4xl;
+  }
+
+  .scoreboard-shell > .mt-4 {
+    @apply py-1.5;
+  }
+
+  .scoreboard-shell > .mt-4 p:nth-child(2) {
+    @apply text-2xl;
+  }
+
+  .match-action-btn {
+    height: 50px;
+    font-size: 0.75rem;
+  }
+
+  .match-undo-row button {
+    height: 42px;
+  }
+}

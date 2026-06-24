@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import HomePage from "@/components/HomePage";
+import CoinFlipScreen from "@/components/CoinFlipScreen";
 import HistoryPage from "@/components/HistoryPage";
 import HistoryPasswordModal, { isHistoryUnlocked } from "@/components/HistoryPasswordModal";
 import MatchDetailPage from "@/components/MatchDetailPage";
@@ -23,7 +24,7 @@ import {
 } from "@/utils/matchCloud";
 import { createMatch, createMatchRecord } from "@/utils/scoringLogic";
 
-type View = "home" | "match" | "history" | "detail";
+type View = "home" | "match" | "history" | "detail" | "reselect-server";
 
 export default function Page() {
   const [view, setView] = useState<View>("home");
@@ -76,6 +77,25 @@ export default function Page() {
 
   const handleUpdate = useCallback((updated: MatchState) => {
     setMatch(updated);
+  }, []);
+
+  const handleReselectServer = useCallback(() => {
+    setView("reselect-server");
+  }, []);
+
+  const handleReselectServerDone = useCallback((server: MatchState["currentServer"]) => {
+    setMatch((current) => {
+      if (!current) return current;
+      return createMatch({
+        player1Name: current.player1.name,
+        player2Name: current.player2.name,
+        scorerName: current.scorerName,
+        gamesToWin: current.gamesToWin,
+        scoringMode: current.scoringMode,
+        firstServer: server,
+      });
+    });
+    setView("match");
   }, []);
 
   const handleMatchComplete = useCallback((completed: MatchState) => {
@@ -175,6 +195,18 @@ export default function Page() {
         onLeave={handleLeaveMatch}
         onEnd={handleEnd}
         onMatchComplete={handleMatchComplete}
+        onReselectServer={handleReselectServer}
+      />
+    );
+  }
+
+  if (view === "reselect-server" && match) {
+    return (
+      <CoinFlipScreen
+        player1Name={match.player1.name}
+        player2Name={match.player2.name}
+        onSelectServer={handleReselectServerDone}
+        onBack={() => setView("match")}
       />
     );
   }

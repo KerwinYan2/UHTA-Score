@@ -73,82 +73,107 @@ export default function HomePage({
 
   if (step === "setup") {
     return (
-      <div className="page-fill px-4">
-        <div className="flex items-center h-12 shrink-0">
+      <div className="page-fill event-page">
+        <div className="flex items-center h-14 shrink-0 px-5">
           <button
             type="button"
             onClick={() => setStep("entry")}
-            className="text-sm text-apple-blue font-medium"
+            className="text-sm text-[#111827] font-semibold"
           >
-            ← 返回
+            &lt; 返回
           </button>
         </div>
 
-        <form onSubmit={handleSetupSubmit} className="page-fill flex flex-col min-h-0">
-          <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
-            <h1 className="text-2xl font-semibold text-apple-gray-900">比赛设置</h1>
-
-            <div>
-              <label htmlFor="player1" className="block text-xs font-medium text-apple-gray-400 uppercase tracking-wider mb-2">
-                球员 A
-              </label>
-              <input
-                id="player1"
-                name="player1"
-                type="text"
-                placeholder="球员A"
-                className="apple-input"
-                autoComplete="off"
-                required
-              />
+        <form onSubmit={handleSetupSubmit} className="page-fill min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4">
+            <div className="mb-5">
+              <p className="event-kicker">Match Setup</p>
+              <h1 className="event-title mt-2">比赛信息</h1>
+              <p className="mt-2 text-sm font-medium text-apple-gray-400">
+                先录入比赛人员信息，再开始抛硬币选择发球方
+              </p>
             </div>
 
-            <div>
-              <label htmlFor="player2" className="block text-xs font-medium text-apple-gray-400 uppercase tracking-wider mb-2">
-                球员 B
-              </label>
-              <input
-                id="player2"
-                name="player2"
-                type="text"
-                placeholder="球员B"
-                className="apple-input"
-                autoComplete="off"
-                required
-              />
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="event-stat-card">
+                <span>赛制</span>
+                <strong>{gamesToWin}局</strong>
+              </div>
+              <div className="event-stat-card">
+                <span>计分</span>
+                <strong>{scoringMode === "golden" ? "金球" : "占先"}</strong>
+              </div>
+              <div className="event-stat-card">
+                <span>抢七</span>
+                <strong>{gamesToWin === 4 ? "3-3" : "5-5"}</strong>
+              </div>
             </div>
 
-            <div>
-              <span className="block text-xs font-medium text-apple-gray-400 uppercase tracking-wider mb-2">
-                赛制
-              </span>
+            <div className="setup-panel space-y-4">
+              <div>
+                <label htmlFor="player1" className="setup-label">
+                  球员 A
+                </label>
+                <input
+                  id="player1"
+                  name="player1"
+                  type="text"
+                  placeholder="输入球员A姓名"
+                  className="apple-input"
+                  autoComplete="off"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="player2" className="setup-label">
+                  球员 B
+                </label>
+                <input
+                  id="player2"
+                  name="player2"
+                  type="text"
+                  placeholder="输入球员B姓名"
+                  className="apple-input"
+                  autoComplete="off"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <span className="setup-label">赛制</span>
               <div className="grid grid-cols-2 gap-3">
                 {([4, 6] as GamesToWin[]).map((games) => (
                   <button
                     key={games}
                     type="button"
                     onClick={() => setGamesToWin(games)}
-                    className={`option-card ${gamesToWin === games ? "option-card-checked" : ""}`}
+                    className={
+                      "option-card " +
+                      (gamesToWin === games ? "option-card-checked" : "")
+                    }
                   >
-                    <span className="text-lg font-semibold">{games}局</span>
+                    <span className="text-lg font-black">{games}局</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div>
-              <span className="block text-xs font-medium text-apple-gray-400 uppercase tracking-wider mb-2">
-                计分方式
-              </span>
+            <div className="mt-5">
+              <span className="setup-label">计分方式</span>
               <div className="grid grid-cols-2 gap-3">
                 {(["golden", "advantage"] as ScoringMode[]).map((mode) => (
                   <button
                     key={mode}
                     type="button"
                     onClick={() => setScoringMode(mode)}
-                    className={`option-card ${scoringMode === mode ? "option-card-checked" : ""}`}
+                    className={
+                      "option-card " +
+                      (scoringMode === mode ? "option-card-checked" : "")
+                    }
                   >
-                    <span className="text-base font-semibold">
+                    <span className="text-base font-black">
                       {mode === "golden" ? "金球" : "占先"}
                     </span>
                   </button>
@@ -156,20 +181,20 @@ export default function HomePage({
               </div>
             </div>
 
-            <p className="text-xs text-apple-gray-400 text-center leading-relaxed">
+            <p className="mt-5 text-xs text-apple-gray-400 text-center leading-relaxed">
               {formatGamesToWinDetail(4)}
               <br />
               {formatGamesToWinDetail(6)}
             </p>
           </div>
 
-          <div className="shrink-0 pt-3 safe-bottom">
+          <div className="shrink-0 p-5 pt-3 safe-bottom bg-[#F6F8F6]">
             <ScoreButton
-              label="开始比赛"
+              label="抛硬币并开始"
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full"
+              className="w-full !rounded-[18px] !bg-[#0E1320]"
             />
           </div>
         </form>
@@ -178,28 +203,50 @@ export default function HomePage({
   }
 
   return (
-    <div className="page-fill px-4">
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-apple-lg bg-gradient-to-br from-apple-blue to-[#5856D6] shadow-apple-lg mb-4">
-            <span className="text-3xl">🎾</span>
+    <div className="page-fill event-page">
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <p className="event-kicker">UHTA Singles</p>
+            <h1 className="event-title mt-2">UHTA Score</h1>
+            <p className="mt-2 text-sm font-medium text-apple-gray-400">
+              超高压网球俱乐部 · 现场记分
+            </p>
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-apple-gray-900">
-            UHTA Score
-          </h1>
-          <p className="text-apple-gray-400 mt-2 text-sm">超高压网球俱乐部 · 现场记分</p>
+          <button
+            type="button"
+            onClick={onHistory}
+            className="rounded-[18px] bg-[#10D6B4] px-5 py-3 text-sm font-black text-[#05251F] shadow-apple"
+          >
+            历史
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="event-stat-card">
+            <span>赛制</span>
+            <strong>4/6</strong>
+          </div>
+          <div className="event-stat-card">
+            <span>模式</span>
+            <strong>单打</strong>
+          </div>
+          <div className="event-stat-card">
+            <span>状态</span>
+            <strong>赛前</strong>
+          </div>
         </div>
 
         {hasSavedMatch && (
-          <div className="w-full max-w-sm mb-6 p-4 rounded-apple-lg bg-apple-blue/5 border border-apple-blue/20">
-            <p className="text-sm text-apple-gray-600 mb-3 text-center">发现未完成比赛</p>
+          <div className="mb-5 p-4 rounded-[18px] bg-white border border-[#E7ECEA] shadow-apple">
+            <p className="text-sm font-bold text-[#0E1320] mb-3">发现未完成比赛</p>
             <div className="grid grid-cols-2 gap-3">
               <ScoreButton
                 label="继续比赛"
                 onClick={onResume}
                 variant="primary"
                 size="md"
-                className="w-full"
+                className="w-full !bg-[#0E1320]"
               />
               <ScoreButton
                 label="放弃比赛"
@@ -212,33 +259,30 @@ export default function HomePage({
           </div>
         )}
 
-        <div className="w-full max-w-sm space-y-3">
+        <div className="setup-panel">
+          <label htmlFor="scorer" className="setup-label">
+            记分人
+          </label>
           <input
+            id="scorer"
             type="text"
             value={scorerName}
             onChange={(e) => setScorerName(e.target.value)}
-            placeholder="记分人"
+            placeholder="输入记分人姓名"
             className="apple-input"
             autoComplete="off"
           />
-          <ScoreButton
-            label="开始比赛"
+          <button
+            type="button"
             onClick={() => {
               if (!scorerName.trim()) return;
               setStep("setup");
             }}
-            variant="primary"
-            size="lg"
-            className="w-full"
             disabled={!scorerName.trim()}
-          />
-          <ScoreButton
-            label="历史记录"
-            onClick={onHistory}
-            variant="secondary"
-            size="lg"
-            className="w-full"
-          />
+            className="mt-4 w-full rounded-[18px] bg-[#0E1320] px-5 py-4 text-base font-black text-white shadow-apple-lg transition active:scale-[0.98] disabled:bg-[#9CA3AF] disabled:shadow-none"
+          >
+            创建比赛
+          </button>
         </div>
       </div>
     </div>
