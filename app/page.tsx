@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import HomePage from "@/components/HomePage";
 import CoinFlipScreen from "@/components/CoinFlipScreen";
 import HistoryPage from "@/components/HistoryPage";
-import HistoryPasswordModal, { isHistoryUnlocked } from "@/components/HistoryPasswordModal";
 import MatchDetailPage from "@/components/MatchDetailPage";
 import MatchPage from "@/components/MatchPage";
-import { MatchRecord, MatchSetup, MatchState } from "@/types/match";
+import TournamentChartPage from "@/components/TournamentChartPage";
+import TournamentPage from "@/components/TournamentPage";
+import { MatchRecord, MatchSetup, MatchState, PlayerIndex, RatedPlayer, Tournament } from "@/types/match";
 import {
   deleteHistoryRecord,
   loadActiveMatch,
@@ -23,11 +24,34 @@ import {
   saveCloudRecord,
 } from "@/utils/matchCloud";
 import { createMatch, createMatchRecord } from "@/utils/scoringLogic";
+import {
+  completeTournamentMatch,
+  createTournament,
+  startTournamentMatch,
+  updateTournamentMatchState,
+} from "@/utils/tournamentLogic";
+import {
+  loadActiveTournamentId,
+  deleteTournamentRecord,
+  loadPlayerLibrary,
+  loadTournaments,
+  savePlayerLibrary,
+  upsertTournament,
+} from "@/utils/tournamentStorage";
 
-type View = "home" | "match" | "history" | "detail" | "reselect-server";
+type View =
+  | "home"
+  | "match"
+  | "history"
+  | "detail"
+  | "reselect-server"
+  | "tournament"
+  | "tournament-coin"
+  | "tournament-match"
+  | "tournament-chart";
 
 export default function Page() {
-  const [view, setView] = useState<View>("home");
+  const [view, setView] = useState<View>("tournament-chart");
   const [match, setMatch] = useState<MatchState | null>(null);
   const [hasSavedMatch, setHasSavedMatch] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -35,7 +59,10 @@ export default function Page() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [cloudEnabled, setCloudEnabled] = useState(false);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [players, setPlayers] = useState<RatedPlayer[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [activeTournamentId, setActiveTournamentId] = useState<string | null>(null);
+  const [selectedTournamentMatchId, setSelectedTournamentMatchId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = loadActiveMatch();
@@ -44,8 +71,28 @@ export default function Page() {
       setMatch(saved);
     }
     setHistory(loadHistory());
+    const loadedPlayers = loadPlayerLibrary();
+    const loadedTournaments = loadTournaments();
+    const savedActiveTournamentId = loadActiveTournamentId();
+    const nextActiveTournamentId =
+      loadedTournaments.find((tournament) => tournament.id === savedActiveTournamentId)?.id ??
+      loadedTournaments[0]?.id ??
+      null;
+    setPlayers(loadedPlayers);
+    setTournaments(loadedTournaments);
+    setActiveTournamentId(nextActiveTournamentId);
     setHydrated(true);
   }, []);
+
+  const activeTournament =
+    tournaments.find((tournament) => tournament.id === activeTournamentId) ??
+    tournaments[0] ??
+    null;
+
+  const selectedTournamentMatch =
+    activeTournament?.rounds
+      .flat()
+      .find((tournamentMatch) => tournamentMatch.id === selectedTournamentMatchId) ?? null;
 
   useEffect(() => {
     if (!hydrated) return;
@@ -107,6 +154,130 @@ export default function Page() {
     void saveCloudRecord(record);
   }, []);
 
+  const handleSavePlayers = useCallback((nextPlayers: RatedPlayer[]) => {
+    setPlayers(nextPlayers);
+    savePlayerLibrary(nextPlayers);
+  }, []);
+
+  const handleCreateTournament = useCallback(
+    (options: {
+      name: string;
+      day: Tournament["day"];
+      format: Tournament["format"];
+      playerIds: string[];
+      gamesToWin: Tournament["gamesToWin"];
+      scoringMode: Tournament["scoringMode"];
+    }) => {
+      const selectedPlayers = options.playerIds
+        .map((id) => players.find((player) => player.id === id))
+        .filter(Boolean) as RatedPlayer[];
+      if (selectedPlayers.length !== 8) return;
+
+      const tournament = createTournament({
+        name: options.name,
+        day: options.day,
+        format: options.format,
+        players: selectedPlayers,
+        gamesToWin: options.gamesToWin,
+        scoringMode: options.scoringMode,
+      });
+      const next = upsertTournament(tournament);
+      setTournaments(next);
+      setActiveTournamentId(tournament.id);
+      setView("tournament-chart");
+    },
+    [players]
+  );
+
+  const handleOpenTournament = useCallback((id: string) => {
+    setActiveTournamentId(id);
+    setView("tournament");
+  }, []);
+
+  const handleDeleteTournament = useCallback(
+    (id: string) => {
+      const next = deleteTournamentRecord(id);
+      setTournaments(next);
+      if (activeTournamentId === id) {
+        setActiveTournamentId(next[0]?.id ?? null);
+        setSelectedTournamentMatchId(null);
+        if (view === "tournament-chart" || view === "tournament-match" || view === "tournament-coin") {
+          setView("tournament");
+        }
+      }
+    },
+    [activeTournamentId, view]
+  );
+
+  const persistTournament = useCallback((tournament: Tournament) => {
+    const next = upsertTournament(tournament);
+    setTournaments(next);
+    setActiveTournamentId(tournament.id);
+  }, []);
+
+  const handleOpenTournamentMatch = useCallback(
+    (tournamentId: string, matchId: string) => {
+      setActiveTournamentId(tournamentId);
+      setSelectedTournamentMatchId(matchId);
+      const tournament = tournaments.find((item) => item.id === tournamentId);
+      const tournamentMatch = tournament?.rounds.flat().find((item) => item.id === matchId);
+      if (!tournament || !tournamentMatch) return;
+      if (tournamentMatch.matchState) {
+        setMatch(tournamentMatch.matchState);
+        setView("tournament-match");
+      } else {
+        setView("tournament-coin");
+      }
+    },
+    [tournaments]
+  );
+
+  const handleTournamentServerSelected = useCallback(
+    (server: PlayerIndex) => {
+      if (!activeTournament || !selectedTournamentMatchId) return;
+      const nextTournament = startTournamentMatch(
+        activeTournament,
+        selectedTournamentMatchId,
+        server,
+        "赛事"
+      );
+      const nextMatch =
+        nextTournament.rounds.flat().find((item) => item.id === selectedTournamentMatchId)
+          ?.matchState ?? null;
+      persistTournament(nextTournament);
+      setMatch(nextMatch);
+      setView("tournament-match");
+    },
+    [activeTournament, persistTournament, selectedTournamentMatchId]
+  );
+
+  const handleTournamentMatchUpdate = useCallback(
+    (updated: MatchState) => {
+      setMatch(updated);
+      if (!activeTournament || !selectedTournamentMatchId) return;
+      persistTournament(
+        updateTournamentMatchState(activeTournament, selectedTournamentMatchId, updated)
+      );
+    },
+    [activeTournament, persistTournament, selectedTournamentMatchId]
+  );
+
+  const handleTournamentMatchComplete = useCallback(
+    (completed: MatchState) => {
+      if (!activeTournament || !selectedTournamentMatchId) return;
+      const nextTournament = completeTournamentMatch(
+        activeTournament,
+        selectedTournamentMatchId,
+        completed
+      );
+      persistTournament(nextTournament);
+      setMatch(null);
+      setSelectedTournamentMatchId(null);
+      setView("tournament-chart");
+    },
+    [activeTournament, persistTournament, selectedTournamentMatchId]
+  );
+
   const handleLeaveMatch = useCallback(() => {
     setView("home");
   }, []);
@@ -140,15 +311,6 @@ export default function Page() {
   }, [refreshHistory]);
 
   const handleHistory = useCallback(() => {
-    if (isHistoryUnlocked()) {
-      goToHistory();
-    } else {
-      setShowPasswordModal(true);
-    }
-  }, [goToHistory]);
-
-  const handlePasswordSuccess = useCallback(() => {
-    setShowPasswordModal(false);
     goToHistory();
   }, [goToHistory]);
 
@@ -200,6 +362,84 @@ export default function Page() {
     );
   }
 
+  if (view === "tournament") {
+    return (
+      <TournamentPage
+        players={players}
+        tournaments={tournaments}
+        activeTournament={activeTournament}
+        onBack={() => setView("home")}
+        onSavePlayers={handleSavePlayers}
+        onCreateTournament={handleCreateTournament}
+        onOpenTournament={handleOpenTournament}
+        onOpenMatch={handleOpenTournamentMatch}
+        onOpenChart={(id) => {
+          setActiveTournamentId(id);
+          setView("tournament-chart");
+        }}
+        onHistory={() => setView("history")}
+        onCreateMatch={() => setView("home")}
+      />
+    );
+  }
+
+  if (view === "tournament-chart" && activeTournament) {
+    return (
+      <TournamentChartPage
+        tournament={activeTournament}
+        onAdmin={() => setView("tournament")}
+        onDelete={handleDeleteTournament}
+      />
+    );
+  }
+
+  if (view === "tournament-chart" && !activeTournament) {
+    return (
+      <TournamentPage
+        players={players}
+        tournaments={tournaments}
+        activeTournament={activeTournament}
+        onBack={() => setView("home")}
+        onSavePlayers={handleSavePlayers}
+        onCreateTournament={handleCreateTournament}
+        onOpenTournament={handleOpenTournament}
+        onOpenMatch={handleOpenTournamentMatch}
+        onOpenChart={(id) => {
+          setActiveTournamentId(id);
+          setView("tournament-chart");
+        }}
+        onHistory={() => setView("history")}
+        onCreateMatch={() => setView("home")}
+      />
+    );
+  }
+
+  if (view === "tournament-coin" && activeTournament && selectedTournamentMatch) {
+    const p1 = activeTournament.players.find((player) => player.id === selectedTournamentMatch.player1Id)!;
+    const p2 = activeTournament.players.find((player) => player.id === selectedTournamentMatch.player2Id)!;
+    return (
+      <CoinFlipScreen
+        player1Name={p1.name}
+        player2Name={p2.name}
+        onSelectServer={handleTournamentServerSelected}
+        onBack={() => setView("tournament")}
+      />
+    );
+  }
+
+  if (view === "tournament-match" && match) {
+    return (
+      <MatchPage
+        match={match}
+        onUpdate={handleTournamentMatchUpdate}
+        onLeave={() => setView("tournament")}
+        onEnd={() => setView("tournament")}
+        onMatchComplete={handleTournamentMatchComplete}
+        onReselectServer={() => setView("tournament-coin")}
+      />
+    );
+  }
+
   if (view === "reselect-server" && match) {
     return (
       <CoinFlipScreen
@@ -217,8 +457,13 @@ export default function Page() {
         records={history}
         loading={historyLoading}
         cloudEnabled={cloudEnabled}
+        tournaments={tournaments}
         onSelect={handleSelectRecord}
         onDelete={handleDeleteRecord}
+        onSelectTournament={(id) => {
+          setActiveTournamentId(id);
+          setView("tournament-chart");
+        }}
         onBack={handleBackFromHistory}
         onRefresh={() => void refreshHistory()}
       />
@@ -239,20 +484,13 @@ export default function Page() {
   }
 
   return (
-    <>
-      <HomePage
-        onStart={handleStart}
-        onResume={handleResume}
-        onAbandon={handleAbandon}
-        onHistory={handleHistory}
-        hasSavedMatch={hasSavedMatch}
-      />
-      {showPasswordModal && (
-        <HistoryPasswordModal
-          onSuccess={handlePasswordSuccess}
-          onClose={() => setShowPasswordModal(false)}
-        />
-      )}
-    </>
+    <HomePage
+      onStart={handleStart}
+      onResume={handleResume}
+      onAbandon={handleAbandon}
+      onHistory={handleHistory}
+      onTournament={() => setView(activeTournament ? "tournament-chart" : "tournament")}
+      hasSavedMatch={hasSavedMatch}
+    />
   );
 }

@@ -1,15 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { MatchRecord } from "@/types/match";
+import { useEffect, useMemo, useState } from "react";
+import { MatchRecord, Tournament } from "@/types/match";
+import { authorizeAdminOperation, loadAdminSession, loginAdmin } from "@/utils/adminClient";
 import { formatGamesToWin, formatScoringMode, formatScoreLine } from "@/utils/scoringLogic";
+import PasswordErrorDialog from "./PasswordErrorDialog";
 
 interface HistoryPageProps {
   records: MatchRecord[];
   loading?: boolean;
   cloudEnabled?: boolean;
+  tournaments?: Tournament[];
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
+  onSelectTournament?: (id: string) => void;
   onBack: () => void;
   onRefresh?: () => void;
 }
@@ -31,16 +35,25 @@ function formatRound(index: number): string {
   return group + " R" + round;
 }
 
+function formatTournamentName(name: string): string {
+  return name.replace(/\s*Day[12]\s*$/i, "").trim() || name;
+}
+
 export default function HistoryPage({
   records,
   loading = false,
   cloudEnabled = false,
+  tournaments = [],
   onSelect,
   onDelete,
+  onSelectTournament,
   onBack,
   onRefresh,
 }: HistoryPageProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [actionUnlocked, setActionUnlocked] = useState(false);
+  const [actionPassword, setActionPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const latestDate = records[0] ? formatDate(records[0].endTime) : formatDate(Date.now());
   const latestWinner = records[0]
@@ -59,9 +72,33 @@ export default function HistoryPage({
     );
   }, [records]);
 
-  const handleDelete = (id: string) => {
+  useEffect(() => {
+    void loadAdminSession().then((session) => {
+      setActionUnlocked(session.action);
+    });
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!actionUnlocked) return;
+    const ok = await authorizeAdminOperation();
+    if (!ok) {
+      setActionUnlocked(false);
+      setPasswordError("删除权限已失效，请重新输入密码");
+      return;
+    }
     onDelete(id);
     setConfirmDeleteId(null);
+  };
+
+  const unlockAction = async () => {
+    const ok = await loginAdmin("action", actionPassword);
+    if (!ok) {
+      setPasswordError("删除密码错误");
+      return;
+    }
+    setActionUnlocked(true);
+    setActionPassword("");
+    setPasswordError(null);
   };
 
   return (
@@ -99,21 +136,74 @@ export default function HistoryPage({
 
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="event-stat-card">
-            <span>记录</span>
+            <span>单场</span>
             <strong>{records.length}</strong>
           </div>
           <div className="event-stat-card">
-            <span>同步</span>
-            <strong>{cloudEnabled ? "云端" : "本地"}</strong>
+            <span>赛事</span>
+            <strong>{tournaments.length}</strong>
           </div>
           <div className="event-stat-card">
-            <span>最近冠军</span>
+            <span>{cloudEnabled ? "同步" : "最近冠军"}</span>
             <strong className="truncate">{latestWinner}</strong>
           </div>
         </div>
 
+        <section className="tournament-panel mb-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-[#111827]">删除权限</h2>
+            {actionUnlocked && (
+              <span className="text-xs font-black text-[#10A98F]">已解锁</span>
+            )}
+          </div>
+          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+            <input
+              value={actionPassword}
+              onChange={(event) => setActionPassword(event.target.value)}
+              type="password"
+              placeholder={actionUnlocked ? "删除权限已解锁" : "删除密码"}
+              disabled={actionUnlocked}
+              className="apple-input"
+            />
+            <button
+              type="button"
+              onClick={unlockAction}
+              disabled={actionUnlocked}
+              className="rounded-[8px] bg-[#0E1320] px-4 text-sm font-black text-white disabled:bg-[#9CA3AF]"
+            >
+              {actionUnlocked ? "已解锁" : "解锁"}
+            </button>
+          </div>
+        </section>
+
+        {tournaments.length > 0 && (
+          <section className="mb-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-2xl font-black text-[#0E1320]">赛事记录</h2>
+            </div>
+            <div className="space-y-3">
+              {tournaments.map((tournament) => (
+                <article key={tournament.id} className="tournament-record-row">
+                  <button
+                    type="button"
+                    onClick={() => onSelectTournament?.(tournament.id)}
+                    className="tournament-record-main"
+                  >
+                    <strong>{formatTournamentName(tournament.name)}</strong>
+                    <span>
+                      第{tournament.day}天 · {tournament.players.length}签 ·
+                      第{tournament.currentRound}轮 ·
+                      {tournament.status === "completed" ? " 已结束" : " 进行中"}
+                    </span>
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-2xl font-black text-[#0E1320]">小组赛</h2>
+          <h2 className="text-2xl font-black text-[#0E1320]">单场记录</h2>
           {loading && records.length > 0 && (
             <span className="text-xs font-black text-[#10A98F]">同步中</span>
           )}
@@ -202,9 +292,10 @@ export default function HistoryPage({
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteId(record.id)}
+                              disabled={!actionUnlocked}
                               className="mt-2 w-full py-1.5 text-xs font-bold text-[#B94C68]"
                             >
-                              删除记录
+                              {actionUnlocked ? "删除记录" : "删除需密码"}
                             </button>
                           </>
                         )}
@@ -217,6 +308,10 @@ export default function HistoryPage({
           </div>
         )}
       </div>
+      <PasswordErrorDialog
+        message={passwordError}
+        onClose={() => setPasswordError(null)}
+      />
     </div>
   );
 }

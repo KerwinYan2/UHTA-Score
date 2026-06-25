@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isAuthorizedHistoryRequest } from "@/lib/historyAuth";
 import { getSupabaseAdmin, isCloudEnabled } from "@/lib/supabase/admin";
 import { MatchRecord } from "@/types/match";
 
 export async function GET(request: NextRequest) {
   if (!isCloudEnabled()) {
     return NextResponse.json({ enabled: false, records: [] });
-  }
-
-  if (!isAuthorizedHistoryRequest(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const supabase = getSupabaseAdmin()!;

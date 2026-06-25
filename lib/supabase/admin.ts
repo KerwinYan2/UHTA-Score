@@ -22,7 +22,3 @@ export function getSupabaseAdmin(): SupabaseClient | null {
 
   return adminClient;
 }
-
-export function getHistoryPassword(): string {
-  return process.env.HISTORY_PASSWORD ?? "11224455";
-}

@@ -13,6 +13,7 @@ interface HomePageProps {
   onResume: () => void;
   onAbandon: () => void;
   onHistory: () => void;
+  onTournament: () => void;
   hasSavedMatch: boolean;
 }
 
@@ -29,6 +30,7 @@ export default function HomePage({
   onResume,
   onAbandon,
   onHistory,
+  onTournament,
   hasSavedMatch,
 }: HomePageProps) {
   const [step, setStep] = useState<Step>("entry");
@@ -282,6 +284,13 @@ export default function HomePage({
             className="mt-4 w-full rounded-[18px] bg-[#0E1320] px-5 py-4 text-base font-black text-white shadow-apple-lg transition active:scale-[0.98] disabled:bg-[#9CA3AF] disabled:shadow-none"
           >
             创建比赛
+          </button>
+          <button
+            type="button"
+            onClick={onTournament}
+            className="mt-3 w-full rounded-[18px] border border-[#E1E7E4] bg-white px-5 py-4 text-base font-black text-[#111827] shadow-apple transition active:scale-[0.98]"
+          >
+            赛事中心
           </button>
         </div>
       </div>

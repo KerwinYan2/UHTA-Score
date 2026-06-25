@@ -32,6 +32,13 @@ const STAT_ACTIONS: { type: StatType; label: string; tone: "mint" | "red" | "gol
   { type: "ue", label: "非受迫失误", tone: "gold" },
 ];
 
+const STAT_LABELS: Record<StatType, string> = {
+  ace: "ACE",
+  winner: "制胜分",
+  ue: "非受迫失误",
+  df: "双误",
+};
+
 function MatchEndModal({
   match,
   onConfirm,
@@ -52,6 +59,9 @@ function MatchEndModal({
     (match.points.player1 > 0 || match.points.player2 > 0)
       ? " (抢七 " + match.points.player1 + "-" + match.points.player2 + ")"
       : "";
+  const recordedStats = (["winner", "ace", "ue", "df"] as StatType[]).filter(
+    (type) => match.player1.stats[type] > 0 || match.player2.stats[type] > 0
+  );
 
   return (
     <div className="modal-overlay">
@@ -61,40 +71,29 @@ function MatchEndModal({
           {winnerName} {scoreDisplay}{tiebreakNote}
         </p>
 
-        <div className="rounded-[8px] bg-white p-4 mb-5">
-          <p className="text-center text-lg font-black text-[#111827] mb-3">本场统计</p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-[#111827]">
-                <th className="text-left pb-2 font-black"></th>
-                <th className="pb-2 font-black">{match.player1.name}</th>
-                <th className="pb-2 font-black">{match.player2.name}</th>
-              </tr>
-            </thead>
-            <tbody className="font-black text-[#111827]">
-              <tr>
-                <td className="py-1.5 text-apple-gray-400">制胜分</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.winner}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player2.stats.winner}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 text-apple-gray-400">Ace</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.ace}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player2.stats.ace}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 text-apple-gray-400">非受迫失误</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.ue}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player2.stats.ue}</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 text-apple-gray-400">双误</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player1.stats.df}</td>
-                <td className="py-1.5 text-center tabular-nums">{match.player2.stats.df}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {recordedStats.length > 0 && (
+          <div className="rounded-[8px] bg-white p-4 mb-5">
+            <p className="text-center text-lg font-black text-[#111827] mb-3">本场统计</p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[#111827]">
+                  <th className="text-left pb-2 font-black"></th>
+                  <th className="pb-2 font-black">{match.player1.name}</th>
+                  <th className="pb-2 font-black">{match.player2.name}</th>
+                </tr>
+              </thead>
+              <tbody className="font-black text-[#111827]">
+                {recordedStats.map((type) => (
+                  <tr key={type}>
+                    <td className="py-1.5 text-apple-gray-400">{STAT_LABELS[type]}</td>
+                    <td className="py-1.5 text-center tabular-nums">{match.player1.stats[type]}</td>
+                    <td className="py-1.5 text-center tabular-nums">{match.player2.stats[type]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="flex justify-center gap-5 text-sm font-bold text-apple-gray-500 mb-6">
           <span>时长 {duration}</span>

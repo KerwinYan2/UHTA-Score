@@ -765,3 +765,369 @@
     height: 42px;
   }
 }
+
+@layer components {
+  .tournament-panel {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white p-4 shadow-apple;
+  }
+
+  .mini-metric {
+    @apply rounded-[8px] bg-[#F7FAF9] px-3 py-3;
+  }
+
+  .mini-metric span {
+    @apply block text-xs font-black uppercase text-apple-gray-400;
+  }
+
+  .mini-metric strong {
+    @apply mt-1 block text-xl font-black text-[#111827];
+  }
+
+  .tournament-match-card-btn {
+    @apply block w-full rounded-[8px] border border-[#E1E7E4] bg-white px-3 py-3 text-left
+           shadow-apple active:scale-[0.99];
+  }
+
+  .tournament-match-meta {
+    @apply mb-3 grid grid-cols-[1fr_auto_auto] items-center gap-3 text-xs font-bold text-apple-gray-400;
+  }
+
+  .tournament-match-meta span {
+    @apply min-w-0 truncate;
+  }
+
+  .tournament-match-player {
+    @apply grid grid-cols-[minmax(0,1fr)_32px] items-center gap-3 text-left;
+  }
+
+  .tournament-match-player + .tournament-match-player {
+    @apply mt-2;
+  }
+
+  .tournament-match-player strong {
+    @apply min-w-0 truncate text-[17px] font-black leading-tight text-[#111827];
+  }
+
+  .tournament-match-player b {
+    @apply text-right text-xl font-black tabular-nums text-[#111827];
+  }
+
+  .tournament-match-player.is-winner strong,
+  .tournament-match-player.is-winner b {
+    @apply text-[#10A98F];
+  }
+
+  .tournament-format-btn {
+    @apply min-h-[48px] rounded-[8px] border border-[#E1E7E4] bg-[#F7FAF9] px-2 text-sm font-black text-[#111827];
+  }
+
+  .tournament-format-btn.is-active {
+    @apply border-[#10D6B4] bg-[#E6FBF6] text-[#063C34];
+  }
+
+  .player-pick {
+    @apply flex items-center justify-between rounded-[8px] border border-[#E1E7E4] bg-[#F7FAF9]
+           px-3 py-3 text-left active:scale-[0.99];
+  }
+
+  .player-pick strong {
+    @apply min-w-0 truncate text-base font-black text-[#111827];
+  }
+
+  .player-pick span {
+    @apply rounded-full bg-white px-2 py-1 text-xs font-black text-apple-gray-500;
+  }
+
+  .player-pick.is-active {
+    @apply border-[#10D6B4] bg-[#E6FBF6];
+  }
+
+  .player-admin-row {
+    @apply grid grid-cols-[1fr_72px_48px] items-center gap-3 rounded-[8px] bg-[#F7FAF9] px-3 py-2;
+  }
+
+  .player-admin-row span {
+    @apply min-w-0 truncate text-sm font-black text-[#111827];
+  }
+
+  .player-admin-row input {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white px-2 py-2 text-center text-sm font-black;
+  }
+
+  .player-admin-row button {
+    @apply text-xs font-black text-[#B94C68] disabled:text-apple-gray-300;
+  }
+
+  .tournament-record-row {
+    @apply flex w-full flex-col rounded-[8px] border border-[#E1E7E4] bg-[#F7FAF9] px-3 py-3 text-left;
+  }
+
+  .tournament-record-main {
+    @apply w-full text-left;
+  }
+
+  .tournament-record-main strong {
+    @apply block min-w-0 truncate text-base font-black text-[#111827];
+  }
+
+  .tournament-record-main span {
+    @apply mt-1 block text-xs font-bold text-apple-gray-400;
+  }
+
+  .tournament-record-delete {
+    @apply mt-2 self-start py-1 text-xs font-bold text-[#B94C68];
+  }
+
+  .tournament-record-confirm {
+    @apply mt-3 grid grid-cols-2 gap-2;
+  }
+
+  .tournament-record-confirm button {
+    @apply h-10 rounded-[8px] text-sm font-black;
+  }
+
+  .tournament-record-confirm button:first-child {
+    @apply bg-white text-apple-gray-500;
+  }
+
+  .tournament-record-confirm button:last-child {
+    @apply bg-[#FFE8EE] text-[#B94C68];
+  }
+
+  .chart-topbar {
+    @apply flex h-14 shrink-0 items-center justify-between px-5;
+  }
+
+  .chart-scroll {
+    @apply overflow-x-auto pb-3;
+  }
+
+  .chart-board {
+    @apply grid min-w-[1020px] grid-cols-[repeat(3,270px)_170px] gap-3;
+  }
+
+  .chart-round,
+  .chart-standings {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white p-3 shadow-apple;
+  }
+
+  .chart-round h2,
+  .chart-standings h2 {
+    @apply mb-2.5 rounded-[8px] bg-[#F7FAF9] py-2 text-center text-base font-black text-[#0E4EA8];
+  }
+
+  .chart-match-card {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white p-2.5 shadow-apple;
+  }
+
+  .chart-player {
+    @apply grid grid-cols-[minmax(max-content,1fr)_24px] items-center gap-1.5 text-[12px] font-black leading-tight text-[#111827];
+  }
+
+  .chart-player span {
+    @apply min-w-max whitespace-nowrap;
+  }
+
+  .chart-player em {
+    @apply text-[10px] not-italic font-bold text-apple-gray-400;
+  }
+
+  .chart-player strong {
+    @apply text-xs font-black tabular-nums text-apple-gray-500;
+  }
+
+  .chart-player.is-winner span,
+  .chart-player.is-winner strong {
+    @apply text-[#0E4EA8];
+  }
+
+  .chart-standing-row {
+    @apply grid grid-cols-[28px_1fr_58px_28px_36px] items-center gap-2 rounded-[8px] bg-[#F7FAF9] px-2.5 py-2.5;
+  }
+
+  .chart-standing-row span {
+    @apply flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-black text-[#111827];
+  }
+
+  .chart-standing-row strong {
+    @apply min-w-0 whitespace-normal break-words text-sm font-black leading-tight text-[#111827];
+  }
+
+  .chart-standing-row em {
+    @apply text-xs not-italic font-bold text-apple-gray-500;
+  }
+
+  .chart-standing-row b {
+    @apply text-center text-sm font-black text-[#111827];
+  }
+
+  .chart-standing-row small {
+    @apply text-right text-xs font-black text-[#108A47];
+  }
+
+  .chart-info-grid {
+    @apply mt-5 grid grid-cols-3 gap-3;
+  }
+
+  .chart-info-grid div {
+    @apply rounded-[8px] border border-[#E1E7E4] bg-white px-3 py-3 shadow-apple;
+  }
+
+  .chart-info-grid span {
+    @apply block text-xs font-black uppercase text-apple-gray-400;
+  }
+
+  .chart-info-grid strong {
+    @apply mt-1 block text-sm font-black text-[#111827];
+  }
+
+  @media (max-width: 639px) {
+    .event-title {
+      @apply text-[34px];
+    }
+
+    .tournament-page .event-stat-card {
+      @apply px-2.5 py-2.5;
+      min-height: 62px;
+    }
+
+    .tournament-page .event-stat-card span {
+      @apply text-xs;
+    }
+
+    .tournament-page .event-stat-card strong {
+      @apply text-lg;
+    }
+
+    .tournament-page .tournament-panel {
+      @apply p-3.5;
+    }
+
+    .tournament-page h2 {
+      @apply text-lg;
+    }
+
+    .tournament-match-meta {
+      @apply gap-2 text-[11px];
+    }
+
+    .tournament-match-player strong {
+      @apply text-base;
+    }
+
+    .tournament-match-player b {
+      @apply text-lg;
+    }
+
+    .tournament-format-btn {
+      @apply min-h-[44px] text-xs;
+    }
+
+    .player-pick {
+      @apply px-2.5 py-2.5;
+    }
+
+    .player-pick strong {
+      @apply text-sm;
+    }
+
+    .tournament-chart-page {
+      position: fixed;
+      inset: 0;
+      width: 100vh;
+      height: 100vw;
+      transform: rotate(90deg) translateY(-100%);
+      transform-origin: top left;
+      overflow: hidden;
+    }
+
+    .chart-topbar {
+      @apply h-10 px-3;
+    }
+
+    .chart-topbar button {
+      @apply px-3 py-1.5 text-xs;
+    }
+
+    .tournament-chart-page > .flex-1 {
+      @apply px-3 pb-3;
+    }
+
+    .tournament-chart-page .event-kicker {
+      @apply text-[10px];
+    }
+
+    .tournament-chart-page .event-title {
+      @apply mt-1 text-[22px];
+    }
+
+    .tournament-chart-page .event-title + p {
+      @apply mt-1 text-xs;
+    }
+
+    .chart-scroll {
+      @apply overflow-x-auto pb-2;
+    }
+
+    .chart-board {
+      @apply min-w-[920px] grid-cols-[repeat(3,238px)_170px] gap-2.5;
+    }
+
+    .chart-round,
+    .chart-standings {
+      @apply p-2.5;
+    }
+
+    .chart-round h2,
+    .chart-standings h2 {
+      @apply mb-2 py-1.5 text-sm;
+    }
+
+    .chart-match-card {
+      @apply p-2;
+    }
+
+    .chart-player {
+      @apply grid-cols-[minmax(max-content,1fr)_22px] gap-1 text-[10px] leading-tight;
+    }
+
+    .chart-player em {
+      @apply text-[8px];
+    }
+
+    .chart-player strong {
+      @apply text-[11px];
+    }
+
+    .chart-standing-row {
+      @apply grid-cols-[22px_1fr_44px_22px_28px] gap-1 px-1.5 py-1.5;
+    }
+
+    .chart-standing-row span {
+      @apply h-5 w-5 text-[10px];
+    }
+
+    .chart-standing-row strong,
+    .chart-standing-row em,
+    .chart-standing-row b,
+    .chart-standing-row small {
+      @apply text-[10px];
+    }
+
+    .chart-info-grid {
+      @apply mt-3 grid-cols-3 gap-2;
+    }
+
+    .chart-info-grid div {
+      @apply px-2 py-2;
+    }
+
+    .chart-info-grid span {
+      @apply text-[10px];
+    }
+
+    .chart-info-grid strong {
+      @apply text-xs;
+    }
+  }
+}

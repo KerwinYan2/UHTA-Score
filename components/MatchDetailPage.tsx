@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { MatchRecord } from "@/types/match";
+import { useEffect, useState } from "react";
+import { MatchRecord, StatType } from "@/types/match";
+import { authorizeAdminOperation, loadAdminSession, loginAdmin } from "@/utils/adminClient";
 import {
   formatDuration,
   formatGamesToWinDetail,
   formatScoringMode,
   formatScoreLine,
 } from "@/utils/scoringLogic";
+import PasswordErrorDialog from "./PasswordErrorDialog";
 import ScoreButton from "./ScoreButton";
 
 interface MatchDetailPageProps {
@@ -16,6 +18,13 @@ interface MatchDetailPageProps {
   onDelete: (id: string) => void;
 }
 
+const STAT_LABELS: Record<StatType, string> = {
+  ace: "ACE",
+  winner: "制胜分",
+  ue: "非受迫失误",
+  df: "双误",
+};
+
 function formatDateTime(ts: number): string {
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -23,10 +32,43 @@ function formatDateTime(ts: number): string {
 
 export default function MatchDetailPage({ record, onBack, onDelete }: MatchDetailPageProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actionUnlocked, setActionUnlocked] = useState(false);
+  const [actionPassword, setActionPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const winnerName = record.winner === 1 ? record.player1Name : record.player2Name;
   const scoreDisplay = record.tiebreakScore
     ? `${formatScoreLine(record.games)} (抢七 ${record.tiebreakScore.player1}-${record.tiebreakScore.player2})`
     : formatScoreLine(record.games);
+  const recordedStats = (["winner", "ace", "ue", "df"] as StatType[]).filter(
+    (type) => record.player1Stats[type] > 0 || record.player2Stats[type] > 0
+  );
+
+  useEffect(() => {
+    void loadAdminSession().then((session) => {
+      setActionUnlocked(session.action);
+    });
+  }, []);
+
+  const unlockAction = async () => {
+    const ok = await loginAdmin("action", actionPassword);
+    if (!ok) {
+      setPasswordError("删除密码错误");
+      return;
+    }
+    setActionUnlocked(true);
+    setActionPassword("");
+    setPasswordError(null);
+  };
+
+  const deleteRecord = async () => {
+    const ok = await authorizeAdminOperation();
+    if (!ok) {
+      setActionUnlocked(false);
+      setPasswordError("删除权限已失效，请重新输入密码");
+      return;
+    }
+    onDelete(record.id);
+  };
 
   return (
     <div className="page-fill px-4">
@@ -79,42 +121,52 @@ export default function MatchDetailPage({ record, onBack, onDelete }: MatchDetai
           </div>
         </div>
 
-        <div className="glass-card p-4">
-          <p className="text-xs font-medium text-apple-gray-400 uppercase tracking-wider mb-3">
-            技术统计
-          </p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-apple-gray-400 text-xs">
-                <th className="text-left pb-2 font-medium">球员</th>
-                <th className="pb-2 font-medium">ACE</th>
-                <th className="pb-2 font-medium">Win</th>
-                <th className="pb-2 font-medium">UE</th>
-                <th className="pb-2 font-medium">DF</th>
-              </tr>
-            </thead>
-            <tbody className="text-apple-gray-900">
-              <tr className="border-t border-apple-gray-100">
-                <td className="py-2 font-medium truncate max-w-[90px]">{record.player1Name}</td>
-                <td className="py-2 text-center tabular-nums">{record.player1Stats.ace}</td>
-                <td className="py-2 text-center tabular-nums">{record.player1Stats.winner}</td>
-                <td className="py-2 text-center tabular-nums">{record.player1Stats.ue}</td>
-                <td className="py-2 text-center tabular-nums">{record.player1Stats.df}</td>
-              </tr>
-              <tr className="border-t border-apple-gray-100">
-                <td className="py-2 font-medium truncate max-w-[90px]">{record.player2Name}</td>
-                <td className="py-2 text-center tabular-nums">{record.player2Stats.ace}</td>
-                <td className="py-2 text-center tabular-nums">{record.player2Stats.winner}</td>
-                <td className="py-2 text-center tabular-nums">{record.player2Stats.ue}</td>
-                <td className="py-2 text-center tabular-nums">{record.player2Stats.df}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {recordedStats.length > 0 && (
+          <div className="glass-card p-4">
+            <p className="text-xs font-medium text-apple-gray-400 uppercase tracking-wider mb-3">
+              技术统计
+            </p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-apple-gray-400 text-xs">
+                  <th className="text-left pb-2 font-medium">项目</th>
+                  <th className="pb-2 font-medium">{record.player1Name}</th>
+                  <th className="pb-2 font-medium">{record.player2Name}</th>
+                </tr>
+              </thead>
+              <tbody className="text-apple-gray-900">
+                {recordedStats.map((type) => (
+                  <tr key={type} className="border-t border-apple-gray-100">
+                    <td className="py-2 font-medium text-apple-gray-400">{STAT_LABELS[type]}</td>
+                    <td className="py-2 text-center tabular-nums">{record.player1Stats[type]}</td>
+                    <td className="py-2 text-center tabular-nums">{record.player2Stats[type]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="shrink-0 pt-3 safe-bottom space-y-2">
-        {confirmDelete ? (
+        {!actionUnlocked ? (
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <input
+              value={actionPassword}
+              onChange={(event) => setActionPassword(event.target.value)}
+              type="password"
+              placeholder="删除密码"
+              className="apple-input"
+            />
+            <button
+              type="button"
+              onClick={unlockAction}
+              className="rounded-apple bg-apple-gray-900 px-4 text-sm font-semibold text-white"
+            >
+              解锁
+            </button>
+          </div>
+        ) : confirmDelete ? (
           <div className="grid grid-cols-2 gap-3">
             <ScoreButton
               label="取消"
@@ -125,7 +177,7 @@ export default function MatchDetailPage({ record, onBack, onDelete }: MatchDetai
             />
             <ScoreButton
               label="确认删除"
-              onClick={() => onDelete(record.id)}
+              onClick={deleteRecord}
               variant="danger"
               size="lg"
               className="w-full"
@@ -150,6 +202,10 @@ export default function MatchDetailPage({ record, onBack, onDelete }: MatchDetai
           </>
         )}
       </div>
+      <PasswordErrorDialog
+        message={passwordError}
+        onClose={() => setPasswordError(null)}
+      />
     </div>
   );
 }
